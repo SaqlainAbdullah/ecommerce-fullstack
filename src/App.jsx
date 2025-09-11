@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import axios from "axios";
-import Button from "react-bootstrap/Button";
-import Card from "react-bootstrap/Card";
-import Form from "react-bootstrap/Form";
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -45,9 +42,16 @@ function App() {
       await axios.post("http://localhost:5050/products", newProduct);
 
       setProducts([...products, newProduct]);
-      alert("Saved");
+      
+      // Reset form fields
+      setTitle("");
+      setDescription("");
+      setImageURL("");
+      
+      alert("Product added successfully! ✨");
     } catch (err) {
       console.log(err);
+      alert("Error adding product. Please try again.");
     }
   };
   const handleUpdate = async (e) => {
@@ -64,9 +68,24 @@ function App() {
         updatedData
       );
 
-      alert("Saved");
+      // Update the local products state
+      const updatedProducts = products.map(product => 
+        product.id === productIdOfUpdate 
+          ? { ...product, ...updatedData }
+          : product
+      );
+      setProducts(updatedProducts);
+      
+      // Reset form fields and product ID
+      setTitle("");
+      setDescription("");
+      setImageURL("");
+      setProductIdOfUpdate(0);
+      
+      alert("Product updated successfully! 🔄");
     } catch (err) {
       console.log(err);
+      alert("Error updating product. Please try again.");
     }
   };
 
@@ -80,119 +99,196 @@ function App() {
         }
       });
       setProducts(updateProducts);
-      alert("Product Removed");
+      alert("Product deleted successfully! 🗑️");
     } catch (err) {
-      alert("Something went wrong");
+      alert("Error deleting product. Please try again.");
       console.log(err);
     }
   }
 
   return (
-    <>
-      <div style={{ display: "flex" }}>
-        <div>
-          <h2>New Product</h2>
-          <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
-              <Form.Label>title</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter title"
-                onChange={handleTitleChange}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
-              <Form.Label>Image URL</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter Image URL"
-                onChange={handleImageURLChange}
-              />
-            </Form.Group>
-            <Form.Group
-              className="mb-3"
-              controlId="exampleForm.ControlTextarea1"
-            >
-              <Form.Label>Description</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                onChange={handleDescChange}
-              />
-            </Form.Group>
+    <div className="app-container">
+      {/* Header Section */}
+      <header className="app-header">
+        <h1 className="app-title">Modern Store</h1>
+        <p className="app-subtitle">Manage your products with style</p>
+      </header>
 
-            <Button variant="primary" type="submit">
-              Add
-            </Button>
-          </Form>
-        </div>
-        <div>
-          <h2>Product Update</h2>
-          <Form onSubmit={handleUpdate}>
-            <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
-              <Form.Label>title</Form.Label>
-              <Form.Control
+      {/* Forms Section */}
+      <section className="forms-container">
+        {/* Add Product Form */}
+        <div className="form-card">
+          <h2 className="form-title">Add New Product</h2>
+          <form onSubmit={handleSubmit}>
+            <div className="modern-form-group">
+              <label className="modern-form-label">Product Title</label>
+              <input
                 type="text"
-                placeholder="Enter title"
+                className="modern-form-control"
+                placeholder="Enter product title"
+                value={title}
                 onChange={handleTitleChange}
+                required
               />
-            </Form.Group>
-            <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
-              <Form.Label>Image URL</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter Image URL"
+            </div>
+            
+            <div className="modern-form-group">
+              <label className="modern-form-label">Image URL</label>
+              <input
+                type="url"
+                className="modern-form-control"
+                placeholder="https://example.com/image.jpg"
+                value={imageURL}
                 onChange={handleImageURLChange}
+                required
               />
-            </Form.Group>
-            <Form.Group
-              className="mb-3"
-              controlId="exampleForm.ControlTextarea1"
-            >
-              <Form.Label>Description</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
+            </div>
+            
+            <div className="modern-form-group">
+              <label className="modern-form-label">Description</label>
+              <textarea
+                className="modern-form-control modern-textarea"
+                placeholder="Describe your product..."
+                value={description}
                 onChange={handleDescChange}
+                required
               />
-            </Form.Group>
+            </div>
 
-            <Button variant="primary" type="submit">
-              Update
-            </Button>
-          </Form>
+            <button type="submit" className="modern-btn btn-primary">
+              ✨ Add Product
+            </button>
+          </form>
         </div>
-      </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-        {products.map((pr) => {
-          return (
-            <Card
-              style={{
-                width: "18rem",
-                border: "2px solid black",
-                borderRadius: 10,
-              }}
+
+        {/* Update Product Form */}
+        <div className="form-card">
+          <h2 className="form-title">Update Product</h2>
+          {productIdOfUpdate > 0 && (
+            <div style={{ 
+              padding: '12px', 
+              backgroundColor: 'var(--bg-secondary)', 
+              borderRadius: 'var(--radius-md)', 
+              marginBottom: 'var(--space-lg)',
+              border: '1px solid var(--border-color)'
+            }}>
+              <small style={{ color: 'var(--text-secondary)' }}>
+                Updating product ID: {productIdOfUpdate}
+              </small>
+            </div>
+          )}
+          <form onSubmit={handleUpdate}>
+            <div className="modern-form-group">
+              <label className="modern-form-label">Product Title</label>
+              <input
+                type="text"
+                className="modern-form-control"
+                placeholder="Enter product title"
+                value={title}
+                onChange={handleTitleChange}
+                required
+              />
+            </div>
+            
+            <div className="modern-form-group">
+              <label className="modern-form-label">Image URL</label>
+              <input
+                type="url"
+                className="modern-form-control"
+                placeholder="https://example.com/image.jpg"
+                value={imageURL}
+                onChange={handleImageURLChange}
+                required
+              />
+            </div>
+            
+            <div className="modern-form-group">
+              <label className="modern-form-label">Description</label>
+              <textarea
+                className="modern-form-control modern-textarea"
+                placeholder="Describe your product..."
+                value={description}
+                onChange={handleDescChange}
+                required
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              className="modern-btn btn-primary"
+              disabled={productIdOfUpdate === 0}
             >
-              <Card.Img variant="top" src={pr.imageURL} width={200} />
-              <Card.Body>
-                <Card.Title>{pr.title}</Card.Title>
-                <Card.Text>{pr.description}</Card.Text>
-                <Button
-                  variant="primary"
-                  onClick={() => setProductIdOfUpdate(pr.id)}
-                >
-                  Update
-                </Button>
-                <Button variant="primary" onClick={() => deleteProduct(pr.id)}>
-                  Delete
-                </Button>
-                <Button variant="primary">Add to Cart</Button>
-              </Card.Body>
-            </Card>
-          );
-        })}
-      </div>
-    </>
+              🔄 Update Product
+            </button>
+          </form>
+        </div>
+      </section>
+
+      {/* Products Section */}
+      <section className="products-section">
+        <div className="products-header">
+          <h2>Product Catalog</h2>
+          <p>Manage your product inventory</p>
+        </div>
+        
+        <div className="products-grid">
+          {products.length === 0 ? (
+            <div className="loading">
+              No products available. Add your first product above!
+            </div>
+          ) : (
+            products.map((pr) => (
+              <article key={pr.id} className="product-card">
+                <div className="product-image-container">
+                  <img 
+                    className="product-image" 
+                    src={pr.imageURL} 
+                    alt={pr.title}
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/400x240?text=No+Image';
+                    }}
+                  />
+                </div>
+                
+                <div className="product-content">
+                  <h3 className="product-title">{pr.title}</h3>
+                  <p className="product-description">{pr.description}</p>
+                  
+                  <div className="product-actions">
+                    <button
+                      className="modern-btn btn-secondary"
+                      onClick={() => {
+                        setProductIdOfUpdate(pr.id);
+                        setTitle(pr.title);
+                        setDescription(pr.description);
+                        setImageURL(pr.imageURL);
+                      }}
+                    >
+                      ✏️ Edit
+                    </button>
+                    
+                    <button 
+                      className="modern-btn btn-danger"
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to delete this product?')) {
+                          deleteProduct(pr.id);
+                        }
+                      }}
+                    >
+                      🗑️ Delete
+                    </button>
+                    
+                    <button className="modern-btn btn-success">
+                      🛒 Add to Cart
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))
+          )}
+        </div>
+      </section>
+    </div>
   );
 }
 
