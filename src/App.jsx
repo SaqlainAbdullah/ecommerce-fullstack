@@ -12,10 +12,18 @@ function App() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get("http://localhost:5050/products");
-        setProducts(res.data);
+        const res = await axios.get("/api/products");
+        // Ensure we always set an array, even if API returns something else
+        if (Array.isArray(res.data)) {
+          setProducts(res.data);
+        } else {
+          console.warn('API returned non-array data:', res.data);
+          setProducts([]);
+        }
       } catch (err) {
-        console.log(err);
+        console.error('Error fetching products:', err);
+        // Keep products as empty array on error
+        setProducts([]);
       }
     };
     fetchProducts();
@@ -34,12 +42,12 @@ function App() {
     e.preventDefault();
     try {
       const newProduct = {
-        id: products.length + 1,
+        id: (Array.isArray(products) ? products.length : 0) + 1,
         title: title,
         description: description,
         imageURL: imageURL,
       };
-      await axios.post("http://localhost:5050/products", newProduct);
+      await axios.post("/api/products", newProduct);
 
       setProducts([...products, newProduct]);
       
@@ -48,7 +56,7 @@ function App() {
       setDescription("");
       setImageURL("");
       
-      alert("Product added successfully! ✨");
+      alert("Product added successfully!");
     } catch (err) {
       console.log(err);
       alert("Error adding product. Please try again.");
@@ -64,17 +72,19 @@ function App() {
         imageURL: imageURL,
       };
       await axios.put(
-        `http://localhost:5050/products/${productIdOfUpdate}`,
+        `/api/products/${productIdOfUpdate}`,
         updatedData
       );
 
       // Update the local products state
-      const updatedProducts = products.map(product => 
-        product.id === productIdOfUpdate 
-          ? { ...product, ...updatedData }
-          : product
-      );
-      setProducts(updatedProducts);
+      if (Array.isArray(products)) {
+        const updatedProducts = products.map(product => 
+          product.id === productIdOfUpdate 
+            ? { ...product, ...updatedData }
+            : product
+        );
+        setProducts(updatedProducts);
+      }
       
       // Reset form fields and product ID
       setTitle("");
@@ -82,7 +92,7 @@ function App() {
       setImageURL("");
       setProductIdOfUpdate(0);
       
-      alert("Product updated successfully! 🔄");
+      alert("Product updated successfully!");
     } catch (err) {
       console.log(err);
       alert("Error updating product. Please try again.");
@@ -91,15 +101,13 @@ function App() {
 
   async function deleteProduct(id) {
     try {
-      await axios.delete(`http://localhost:5050/products/${id}`);
+      await axios.delete(`/api/products/${id}`);
 
-      const updateProducts = products.filter((pr) => {
-        if (pr.id != id) {
-          return pr;
-        }
-      });
-      setProducts(updateProducts);
-      alert("Product deleted successfully! 🗑️");
+      if (Array.isArray(products)) {
+        const updateProducts = products.filter((pr) => pr.id != id);
+        setProducts(updateProducts);
+      }
+      alert("Product deleted successfully!");
     } catch (err) {
       alert("Error deleting product. Please try again.");
       console.log(err);
@@ -156,7 +164,7 @@ function App() {
             </div>
 
             <button type="submit" className="modern-btn btn-primary">
-              ✨ Add Product
+              Add Product
             </button>
           </form>
         </div>
@@ -218,7 +226,7 @@ function App() {
               className="modern-btn btn-primary"
               disabled={productIdOfUpdate === 0}
             >
-              🔄 Update Product
+              Update Product
             </button>
           </form>
         </div>
@@ -232,7 +240,7 @@ function App() {
         </div>
         
         <div className="products-grid">
-          {products.length === 0 ? (
+          {!Array.isArray(products) || products.length === 0 ? (
             <div className="loading">
               No products available. Add your first product above!
             </div>
@@ -242,8 +250,8 @@ function App() {
                 <div className="product-image-container">
                   <img 
                     className="product-image" 
-                    src={pr.imageURL} 
-                    alt={pr.title}
+                    src={pr.imageUrl || pr.imageURL} 
+                    alt={pr.name || pr.title}
                     onError={(e) => {
                       e.target.src = 'https://via.placeholder.com/400x240?text=No+Image';
                     }}
@@ -251,20 +259,20 @@ function App() {
                 </div>
                 
                 <div className="product-content">
-                  <h3 className="product-title">{pr.title}</h3>
-                  <p className="product-description">{pr.description}</p>
+                  <h3 className="product-title">{pr.name || pr.title}</h3>
+                  <p className="product-description">{pr.desc || pr.description}</p>
                   
                   <div className="product-actions">
                     <button
                       className="modern-btn btn-secondary"
                       onClick={() => {
                         setProductIdOfUpdate(pr.id);
-                        setTitle(pr.title);
-                        setDescription(pr.description);
-                        setImageURL(pr.imageURL);
+                        setTitle(pr.name || pr.title);
+                        setDescription(pr.desc || pr.description);
+                        setImageURL(pr.imageUrl || pr.imageURL);
                       }}
                     >
-                      ✏️ Edit
+                      Edit
                     </button>
                     
                     <button 
@@ -275,11 +283,7 @@ function App() {
                         }
                       }}
                     >
-                      🗑️ Delete
-                    </button>
-                    
-                    <button className="modern-btn btn-success">
-                      🛒 Add to Cart
+                      Delete
                     </button>
                   </div>
                 </div>
